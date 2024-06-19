@@ -12,12 +12,15 @@ body {
 
 #messages {
     flex-grow: 2;
+    overflow-y: auto;
 }
 
 .message {
     border-bottom: 2px solid #ccc;
     padding: 5px;
     margin-left: 10px;
+    white-space: pre-wrap; /* Preserve whitespace and line breaks */
+    word-wrap: break-word; /* Break long words */
 }
 
 .message:last-child {

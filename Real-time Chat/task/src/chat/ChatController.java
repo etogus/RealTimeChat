@@ -1,21 +1,27 @@
 package chat;
 
+import org.springframework.context.event.EventListener;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.SendTo;
+import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Controller
 public class ChatController {
 
     private final List<Message> messages = new ArrayList<>();
-    private final List<String> usernames = new ArrayList<>();
+    private final Map<String, String> users = new ConcurrentHashMap<>(); // Mapping sessionId to username
+    private final List<String> userNames = new ArrayList<>();
     private final SimpMessagingTemplate template;
 
     public ChatController(SimpMessagingTemplate template) {
@@ -38,11 +44,26 @@ public class ChatController {
         return messages;
     }
 
-    public void addUser(String username) {
-        if (!usernames.contains(username)) {
-            usernames.add(username);
-        } else {
-            throw new IllegalArgumentException("Username already taken");
+    @MessageMapping("/addUser")
+    public void addUser(String username, SimpMessageHeaderAccessor headerAccessor) {
+        String sessionId = headerAccessor.getSessionId();
+        users.put(sessionId, username);
+        headerAccessor.getSessionAttributes().put("username", username);
+        userNames.add(username);
+        broadcastUserList();
+    }
+
+    @EventListener
+    public void handleSessionDisconnect(SessionDisconnectEvent event) {
+        String sessionId = event.getSessionId();
+        if (users.containsKey(sessionId)) {
+            userNames.remove(users.get(sessionId));
+            users.remove(sessionId);
+            broadcastUserList();
         }
+    }
+
+    private void broadcastUserList() {
+        template.convertAndSend("/topic/users", userNames);
     }
 }

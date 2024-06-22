@@ -27,6 +27,14 @@ document.addEventListener('DOMContentLoaded', function () {
                 showMessage(JSON.parse(messageOutput.body));
             });
 
+            // Subscribe to user events
+            stompClient.subscribe('/topic/users', function (messageOutput) {
+                updateUserList(JSON.parse(messageOutput.body));
+            });
+
+            // Notify the server about the new user
+            stompClient.send("/app/addUser", {}, username);
+
             // Fetch and display previous messages
             // Sends a GET to the /chat/messages in the ChatController
             fetch('/chat/messages')
@@ -85,5 +93,19 @@ document.addEventListener('DOMContentLoaded', function () {
 
         document.getElementById('messages').appendChild(messageContainer);
         messageContainer.scrollIntoView({ "behavior": "smooth" }); // Auto-scroll to an element with a smooth effect
+    }
+
+    // Function to update the user list
+    function updateUserList(users) {
+        const userList = document.getElementById('users');
+        userList.innerHTML = ''; // Clear the user list
+        users.forEach(user => {
+            if (user !== username) {
+                let userElement = document.createElement('div');
+                userElement.classList.add('user');
+                userElement.textContent = user;
+                userList.appendChild(userElement);
+            }
+        });
     }
 });

@@ -50,7 +50,7 @@ body {
     flex-direction: column;
 }
 
-#chat-header {
+#chat-with {
     padding: 15px;
     font-weight: bold;
     border-bottom: 1px solid #e0e0e0;

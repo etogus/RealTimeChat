@@ -2,6 +2,7 @@ document.addEventListener('DOMContentLoaded', function () {
     let socket = null;
     let stompClient = null;
     let username = null;
+    let currentChat = 'Public chat';
 
     // Event listener for username input
     document.getElementById('send-username-btn').addEventListener('click', function () {
@@ -35,22 +36,10 @@ document.addEventListener('DOMContentLoaded', function () {
             // Notify the server about the new user
             stompClient.send("/app/addUser", {}, username);
 
-            // Fetch and display previous messages
-            // Sends a GET to the /chat/messages in the ChatController
-            fetch('/chat/messages')
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Network response was not ok ' + response.statusText);
-                    }
-                    return response.json();
-                })
-                .then(messages => {
-                    console.log('Fetched messages:', messages);
-                    messages.forEach(showMessage);
-                })
-                .catch(error => {
-                    console.error('Error fetching messages:', error);
-                });
+            currentChat = 'Public chat';
+            document.getElementById('chat-with').textContent = 'Public chat';
+
+            fetchPublicMessages();
         });
     }
 
@@ -73,26 +62,28 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Function to display messages
     function showMessage(message) {
-        let messageContainer = document.createElement('div');
-        messageContainer.classList.add('message-container');
+        if(currentChat === 'Public chat') {
+            let messageContainer = document.createElement('div');
+            messageContainer.classList.add('message-container');
 
-        let senderElement = document.createElement('div');
-        senderElement.classList.add('sender');
-        senderElement.textContent = message.sender;
-        messageContainer.appendChild(senderElement);
+            let senderElement = document.createElement('div');
+            senderElement.classList.add('sender');
+            senderElement.textContent = message.sender;
+            messageContainer.appendChild(senderElement);
 
-        let dateElement = document.createElement('div');
-        dateElement.classList.add('date');
-        dateElement.textContent = message.date;
-        messageContainer.appendChild(dateElement);
+            let dateElement = document.createElement('div');
+            dateElement.classList.add('date');
+            dateElement.textContent = message.date;
+            messageContainer.appendChild(dateElement);
 
-        let messageElement = document.createElement('div');
-        messageElement.classList.add('message');
-        messageElement.textContent = message.content;
-        messageContainer.appendChild(messageElement);
+            let messageElement = document.createElement('div');
+            messageElement.classList.add('message');
+            messageElement.textContent = message.content;
+            messageContainer.appendChild(messageElement);
 
-        document.getElementById('messages').appendChild(messageContainer);
-        messageContainer.scrollIntoView({ "behavior": "smooth" }); // Auto-scroll to an element with a smooth effect
+            document.getElementById('messages').appendChild(messageContainer);
+            messageContainer.scrollIntoView({ "behavior": "smooth" }); // Auto-scroll to an element with a smooth effect
+        }
     }
 
     // Function to update the user list
@@ -104,8 +95,35 @@ document.addEventListener('DOMContentLoaded', function () {
                 let userElement = document.createElement('div');
                 userElement.classList.add('user');
                 userElement.textContent = user;
+                userElement.addEventListener('click', () => openPrivateChat(user));
                 userList.appendChild(userElement);
             }
         });
+    }
+
+    function openPrivateChat(user) {
+        document.getElementById('messages').innerHTML = '';
+        document.getElementById('chat-with').textContent = user;
+        currentChat = user;
+    }
+
+    document.getElementById('public-chat-btn').addEventListener('click', function() {
+        if(currentChat !== 'Public chat') {
+            document.getElementById('messages').innerHTML = '';
+            currentChat = 'Public chat';
+            document.getElementById('chat-with').textContent = currentChat;
+            fetchPublicMessages();
+        }
+    })
+
+    // Fetch and display previous messages
+    // Sends a GET to the /chat/messages in the ChatController
+    function fetchPublicMessages() {
+        fetch('/chat/messages')
+            .then(response => response.json())
+            .then(messages => {
+                messages.forEach(showMessage);
+            })
+            .catch(error => console.error('Error fetching messages:', error))
     }
 });

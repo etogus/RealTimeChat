@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -33,7 +34,7 @@ public class ChatController {
     // Return value is sent to the /topic/messages, which will broadcast it to all clients subscribed to this topic
     @SendTo("/topic/messages")
     public Message sendMessage(Message message) {
-        message.setDate(LocalDateTime.now().toString());
+        message.setDate(LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm dd MMM")));
         messages.add(message);
         return message;
     }

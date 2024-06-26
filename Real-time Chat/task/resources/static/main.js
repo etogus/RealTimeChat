@@ -29,6 +29,7 @@ document.addEventListener('DOMContentLoaded', function () {
             });
 
             // Subscribe to private messages
+            // SimpMessagingTemplate = this.destinationPrefix (/user/) + user + destination
             stompClient.subscribe(`/user/${username}/queue/messages`, function (messageOutput) {
                 console.log("HERE:", messageOutput.body);
                 showMessage(JSON.parse(messageOutput.body));

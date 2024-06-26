@@ -28,6 +28,12 @@ document.addEventListener('DOMContentLoaded', function () {
                 showMessage(JSON.parse(messageOutput.body));
             });
 
+            // Subscribe to private messages
+            stompClient.subscribe(`/user/${username}/queue/messages`, function (messageOutput) {
+                console.log("HERE:", messageOutput.body);
+                showMessage(JSON.parse(messageOutput.body));
+            });
+
             // Subscribe to user events
             stompClient.subscribe('/topic/users', function (messageOutput) {
                 updateUserList(JSON.parse(messageOutput.body));
@@ -51,18 +57,28 @@ document.addEventListener('DOMContentLoaded', function () {
             const messageContent = {
                 sender: username,
                 content: messageField.value,
-                date: new Date().toLocaleString()
+                date: new Date().toLocaleString(),
+                recipient: currentChat === "Public chat"? null: currentChat
             };
-            // Sends a message to the server at the /app/sendMessage destination,
-            // which is handled by the sendMessage method in the ChatController
-            stompClient.send("/app/sendMessage", {}, JSON.stringify(messageContent));
+            if(currentChat === "Public chat") {
+                // Sends a message to the server at the /app/sendMessage destination,
+                // which is handled by the sendMessage method in the ChatController
+                stompClient.send("/app/sendMessage", {}, JSON.stringify(messageContent));
+            } else {
+                stompClient.send("/app/sendUserMessage", {}, JSON.stringify(messageContent));
+            }
+
             messageField.value = ""; // Clear the user input field
         }
     });
 
     // Function to display messages
     function showMessage(message) {
-        if(currentChat === 'Public chat') {
+        if ((currentChat === 'Public chat' && !message.recipient) ||
+            (currentChat !== 'Public chat' &&
+             ((message.sender === username && message.recipient === currentChat) ||
+              (message.recipient === username && message.sender === currentChat)))) {
+            console.log("here");
             let messageContainer = document.createElement('div');
             messageContainer.classList.add('message-container');
 
@@ -105,6 +121,8 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('messages').innerHTML = '';
         document.getElementById('chat-with').textContent = user;
         currentChat = user;
+
+        fetchPrivateMessages(username, user);
     }
 
     document.getElementById('public-chat-btn').addEventListener('click', function() {
@@ -120,6 +138,17 @@ document.addEventListener('DOMContentLoaded', function () {
     // Sends a GET to the /chat/messages in the ChatController
     function fetchPublicMessages() {
         fetch('/chat/messages')
+            .then(response => response.json())
+            .then(messages => {
+                messages.forEach(showMessage);
+            })
+            .catch(error => console.error('Error fetching messages:', error))
+    }
+
+    // Fetch and display previous messages
+    // Sends a GET to the user/chat/messages in the ChatController
+    function fetchPrivateMessages(sender, recipient) {
+        fetch(`/user/chat/messages?sender=${sender}&recipient=${recipient}`)
             .then(response => response.json())
             .then(messages => {
                 messages.forEach(showMessage);

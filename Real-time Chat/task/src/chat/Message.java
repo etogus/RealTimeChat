@@ -4,6 +4,7 @@ public class Message {
     private String sender;
     private String content;
     private String date;
+    private String recipient;
 
     public String getSender() {
         return sender;
@@ -27,5 +28,13 @@ public class Message {
 
     public void setDate(String date) {
         this.date = date;
+    }
+
+    public String getRecipient() {
+        return recipient;
+    }
+
+    public void setRecipient(String recipient) {
+        this.recipient = recipient;
     }
 }

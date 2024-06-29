@@ -1,4 +1,4 @@
-A multi-user chat application. [Work in progress]<br>
+A multi-user chat application<br>
 
 Frontend: HTML/CSS and JavaScript<br>
 Backend: Java, Spring Boot and WebSocket with STOMP protocol<br>

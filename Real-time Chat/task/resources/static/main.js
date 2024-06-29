@@ -3,6 +3,7 @@ document.addEventListener('DOMContentLoaded', function () {
     let stompClient = null;
     let username = null;
     let currentChat = 'Public chat';
+    let unreadMessages = {};
 
     // Event listener for username input
     document.getElementById('send-username-btn').addEventListener('click', function () {
@@ -31,8 +32,10 @@ document.addEventListener('DOMContentLoaded', function () {
             // Subscribe to private messages
             // SimpMessagingTemplate = this.destinationPrefix (/user/) + user + destination
             stompClient.subscribe(`/user/${username}/queue/messages`, function (messageOutput) {
-                console.log("HERE:", messageOutput.body);
-                showMessage(JSON.parse(messageOutput.body));
+                const message = JSON.parse(messageOutput.body);
+                showMessage(message);
+                updateUnreadCounter(message.sender);
+                moveUserToTop(message.sender);
             });
 
             // Subscribe to user events
@@ -67,6 +70,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 stompClient.send("/app/sendMessage", {}, JSON.stringify(messageContent));
             } else {
                 stompClient.send("/app/sendUserMessage", {}, JSON.stringify(messageContent));
+                moveUserToTop(currentChat);
             }
 
             messageField.value = ""; // Clear the user input field
@@ -109,11 +113,23 @@ document.addEventListener('DOMContentLoaded', function () {
         userList.innerHTML = ''; // Clear the user list
         users.forEach(user => {
             if (user !== username) {
+                let userContainer = document.createElement('div');
+                userContainer.classList.add('user-container');
+                userContainer.setAttribute('data-username', user);
+
                 let userElement = document.createElement('div');
                 userElement.classList.add('user');
                 userElement.textContent = user;
-                userElement.addEventListener('click', () => openPrivateChat(user));
-                userList.appendChild(userElement);
+
+                let counterElement = document.createElement('div');
+                counterElement.classList.add('new-message-counter');
+                counterElement.style.display = 'none';
+
+                userContainer.appendChild(userElement);
+                userContainer.appendChild(counterElement);
+                userContainer.addEventListener('click', () => openPrivateChat(user));
+
+                userList.appendChild(userContainer);
             }
         });
     }
@@ -122,8 +138,8 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('messages').innerHTML = '';
         document.getElementById('chat-with').textContent = user;
         currentChat = user;
-
         fetchPrivateMessages(username, user);
+        resetUnreadCounter(user);
     }
 
     document.getElementById('public-chat-btn').addEventListener('click', function() {
@@ -155,5 +171,34 @@ document.addEventListener('DOMContentLoaded', function () {
                 messages.forEach(showMessage);
             })
             .catch(error => console.error('Error fetching messages:', error))
+    }
+
+    function updateUnreadCounter(sender) {
+        if(sender !== currentChat) {
+            unreadMessages[sender] = (unreadMessages[sender] || 0) + 1;
+            const userContainer = document.querySelector(`.user-container[data-username="${sender}"]`);
+            if(userContainer) {
+                const counter = userContainer.querySelector('.new-message-counter');
+                counter.textContent = unreadMessages[sender];
+                counter.style.display = 'inline';
+            }
+        }
+    }
+
+    function resetUnreadCounter(user) {
+        unreadMessages[user] = 0;
+        const userContainer = document.querySelector(`.user-container[data-username="${user}"]`);
+        if (userContainer) {
+            const counter = userContainer.querySelector('.new-message-counter');
+            counter.style.display = 'none';
+        }
+    }
+
+    function moveUserToTop(user) {
+        const userList = document.getElementById('users');
+        const userContainer = document.querySelector(`.user-container[data-username="${user}"]`);
+        if(userContainer && userList.firstChild !== userContainer) {
+            userList.insertBefore(userContainer, userList.firstChild);
+        }
     }
 });

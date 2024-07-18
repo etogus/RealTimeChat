@@ -1,9 +1,9 @@
-A multi-user chat application<br>
+# A multi-user chat application<br>
 
 Frontend: HTML/CSS and JavaScript<br>
 Backend: Java, Spring Boot and WebSocket with STOMP protocol<br>
 
-Implemented features:
+## Implemented features
 1. Username login
 2. Public chat
 3. Private messaging between individual users
@@ -14,9 +14,11 @@ Implemented features:
 8. Updating user list when users join or leave the chat
 9. Preservation of chat state when switching between different chats
 
+## Example
 ![image](https://github.com/etogus/RealTimeChat/assets/47570845/f379b3f2-b7e6-4cd2-be27-50242464913d)<br>
 <br>
-To-do ideas:
+
+## To-do ideas
 1. Secure registration
 2. Friends list
 3. Permanent message/user storage

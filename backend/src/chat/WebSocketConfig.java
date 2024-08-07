@@ -26,6 +26,8 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         // Endpoint for clients to connect to the WebSocket server
-        registry.addEndpoint("/chat-websocket").withSockJS();
+        registry.addEndpoint("/chat-websocket")
+                .setAllowedOrigins("http://localhost:3000") // React app url
+                .withSockJS();
     }
 }

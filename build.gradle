@@ -1,24 +1,20 @@
-apply plugin: 'hyperskill'
-
 subprojects {
     apply plugin: 'application'
     apply plugin: 'java'
 
-    def userJava = Integer.parseInt(JavaVersion.current().getMajorVersion())
-    def hsJava = Integer.parseInt(hs.java.version)
-    def testJava = Math.max(userJava, hsJava)
+    def currentJavaVersion = Integer.parseInt(JavaVersion.current().getMajorVersion())
 
-    java.toolchain.languageVersion = JavaLanguageVersion.of(testJava)
+    java.toolchain.languageVersion = JavaLanguageVersion.of(currentJavaVersion)
 
     compileJava {
         javaCompiler = javaToolchains.compilerFor {
-            languageVersion = JavaLanguageVersion.of(userJava)
+            languageVersion = JavaLanguageVersion.of(currentJavaVersion)
         }
     }
 
     compileTestJava {
         javaCompiler = javaToolchains.compilerFor {
-            languageVersion = JavaLanguageVersion.of(testJava)
+            languageVersion = JavaLanguageVersion.of(currentJavaVersion)
         }
     }
 
@@ -28,7 +24,8 @@ subprojects {
     }
 
     dependencies {
-        testImplementation 'com.github.hyperskill:hs-test:release-SNAPSHOT'
+        testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.2'
+        testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.2'
         implementation 'com.microsoft.playwright:playwright:1.22.0'
     }
 
@@ -42,6 +39,7 @@ subprojects {
     }
 
     test {
+        useJUnitPlatform()
         systemProperty "file.encoding", "utf-8"
         outputs.upToDateWhen { false }
     }
@@ -50,21 +48,4 @@ subprojects {
     tasks.withType(JavaCompile) {
         options.encoding = 'utf-8'
     }
-}
-
-project(':util') {
-    dependencies {
-        implementation 'com.github.hyperskill:hs-test:release-SNAPSHOT'
-    }
-}
-
-configure(subprojects.findAll { it.name != 'util' }) {
-    dependencies {
-        testImplementation project(':util').sourceSets.main.output
-        testImplementation project(':util').sourceSets.test.output
-    }
-}
-
-wrapper {
-    gradleVersion = hs.gradle.version
 }

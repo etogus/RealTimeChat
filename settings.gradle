@@ -1,37 +1,23 @@
-buildscript {
-  repositories {
-    maven { url 'https://jitpack.io' }
-  }
+rootProject.name = 'RealTimeChat'
 
-  dependencies {
-    classpath "com.github.hyperskill:hs-gradle-plugin:release-SNAPSHOT"
-  }
+include 'backend'
+include 'frontend'
 
-  configurations.all {
-    resolutionStrategy.cacheChangingModulesFor 0, 'seconds'
-  }
-}
-
-static String sanitizeName(String name) {
+// Helper function to sanitize project names
+def sanitizeName(String name) {
   return name.replaceAll("[ /\\\\:<>\"?*|()]", "_").replaceAll("(^[.]+)|([.]+\$)", "")
 }
 
-rootProject.projectDir.eachDirRecurse {
-  if (!isTaskDir(it) || it.path.contains(".idea")) {
-    return
-  }
-  def taskRelativePath = rootDir.toPath().relativize(it.toPath())
-  def parts = []
-  for (name in taskRelativePath) {
-    parts.add(sanitizeName(name.toString()))
-  }
-  def moduleName =  parts.join("-")
-  include "$moduleName"
-  project(":$moduleName").projectDir = it
+// Function to check if a directory is a valid project directory
+def isProjectDir(File dir) {
+  return new File(dir, "src").exists() || new File(dir, "build.gradle").exists()
 }
 
-def isTaskDir(File dir) {
-  return new File(dir, "src").exists() || new File(dir, "test").exists()
+// Dynamically include subprojects
+rootProject.projectDir.eachDir { dir ->
+  if (isProjectDir(dir) && !dir.name.startsWith('.')) {
+    def projectName = sanitizeName(dir.name)
+    include projectName
+    project(":$projectName").projectDir = dir
+  }
 }
-
-include 'util'
